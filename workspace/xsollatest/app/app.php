@@ -3,6 +3,8 @@
  * Local variables
  * @var \Phalcon\Mvc\Micro $app
  */
+use Models\Users;
+use Phalcon\Http\Response;
 
 /**
  * Add your routes here
@@ -12,9 +14,27 @@ $app->get('/', function () {
 });
 
 // Create new user
-$app->post('/add-user', function() use ($app) {
-    $user = $app->request->getJsonRawBody();
-
+$app->post('/create-user', function() use ($app) {
+    $user = new Users();
+    $response = new Response();
+    if ($user->create($_POST, array('name', 'password')) === false) {
+        echo "Some errors occur while creating user: \n";
+        $response->setStatusCode(409, "Conflict");
+        $response->setJsonContent(
+            [
+                "status"   => "ERROR",
+                "messages" => $user->getMessages(),
+            ]
+        );
+    } else {
+        $response->setStatusCode(201, "Created");
+        $response->setJsonContent(
+            [
+                "status" => "USER SUCCESSFULLY CREATED",
+                "data"   => ['token'=> $user->token],
+            ]
+        );
+    }
 });
 
 // Get file list for current user
