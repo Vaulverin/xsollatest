@@ -18,7 +18,6 @@ $app->post('/create-user', function() use ($app) {
     $user = new Users();
     $response = new Response();
     if ($user->create($_POST, array('name', 'password')) === false) {
-        echo "Some errors occur while creating user: \n";
         $response->setStatusCode(409, "Conflict");
         $response->setJsonContent(
             [
