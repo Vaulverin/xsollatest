@@ -3,13 +3,14 @@
  * Local variables
  * @var \Phalcon\Mvc\Micro $app
  */
+use Controllers\FileController;
 use Models\Users;
 use Phalcon\Http\Response;
 
 /**
  * Add your routes here
  */
-$app->get('/', function () {
+$app->get('/', function () use($app) {
     echo $this['view']->render('index');
 });
 
@@ -19,10 +20,14 @@ $app->post('/create-user', function() use ($app) {
     $response = new Response();
     if ($user->create($_POST, array('name', 'password')) === false) {
         $response->setStatusCode(409, "Conflict");
+        $messages = [];
+        foreach ($user->getMessages() as $message) {
+            $messages[] = $message->getMessage();
+        }
         $response->setJsonContent(
             [
                 "status"   => "ERROR",
-                "messages" => $user->getMessages(),
+                "messages" => $messages,
             ]
         );
     } else {
@@ -34,32 +39,22 @@ $app->post('/create-user', function() use ($app) {
             ]
         );
     }
+    return $response;
 });
 
+
+$fileController = new FileController();
 // Get file list for current user
-$app->get('/list', function() use ($app) {
-
-});
-
-// File name can contains only letters and digits
-$filename = '{file:[A-z0-9]+.[A-z]{1,5}';
+$app->get('/list', [$fileController, 'getList']);
 
 // Get file with <filename>
-$app->get('/'.$filename, function(File $file) use ($app) {
-
-});
+$app->get('/file/{file}', [$fileController, 'getFile']);
 // Create file with <filename>
-$app->post('/'.$filename, function(File $file) use ($app) {
-
-});
+$app->post('/file/{file}', [$fileController, 'createFile']);
 // Update file with <filename>
-$app->update('/'.$filename, function(File $file) use ($app) {
-
-});
+$app->put('/file/{file}', [$fileController, 'updateFile']);
 // Get file metadata with <filename>
-$app->get('/'.$filename.'/meta', function(File $file) use ($app) {
-
-});
+$app->get('/file/{file}/meta', [$fileController, 'getFileMeta']);
 
 /**
  * Not found handler

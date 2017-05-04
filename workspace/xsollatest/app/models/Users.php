@@ -4,8 +4,8 @@ namespace Models;
 
 use Phalcon\Mvc\Model;
 use Phalcon\Validation;
-use Phalcon\Validation\Validator\Regex;
 use Phalcon\Validation\Validator\Uniqueness;
+use Phalcon\Validation\Validator\Regex as RegexValidator;
 
 class Users extends Model
 {
@@ -82,22 +82,20 @@ class Users extends Model
 
     public function validation()
     {
-        $this->validate(
-            new Uniqueness(
-                [
-                    "field"   => "name",
-                    "message" => "User name has to be unique",
-                ]
-            )
-        );
         $validator = new Validation();
+        $validator->add('name', new Uniqueness(
+            [
+                "model"   => $this,
+                "message" => "User name has to be unique",
+            ]
+        ));
         $validator->add(
             ['name', 'password'],
             new RegexValidator(
                 [
                     "pattern" => [
                         "name" => "/^[A-z0-9]{3,255}$/",
-                        "password" => "/^[a-z]{3,255}$/",
+                        "password" => "/^[A-z0-9]{3,255}$/",
                     ],
                     "message" => [
                         "name" => "User name must contains letters and digits only, min length - 3, max length - 255",
@@ -106,15 +104,20 @@ class Users extends Model
                 ]
             ));
         $this->validate($validator);
-        // Проверяем, были ли получены какие-либо сообщения при валидации
         if ($this->validationHasFailed() === true) {
             return false;
         }
         return true;
     }
 
-    public function beforeCreate() {
+    public function beforeCreate()
+    {
         $this->token = sha1($this->name.$this->password.random_bytes(40));
+        $this->password = $this->encryptPass($this->password);
     }
 
+    protected function encryptPass($pass)
+    {
+        return sha1($pass.'octopus');
+    }
 }

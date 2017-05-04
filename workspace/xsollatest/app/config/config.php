@@ -14,6 +14,7 @@ return new \Phalcon\Config([
 
     'application' => [
         'modelsDir'      => APP_PATH . '/models/',
+        'controllersDir' => APP_PATH . '/controllers/',
         'migrationsDir'  => APP_PATH . '/migrations/',
         'viewsDir'       => APP_PATH . '/views/',
         'baseUri'        => '/xsollatest/',
