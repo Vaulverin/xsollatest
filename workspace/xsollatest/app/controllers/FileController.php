@@ -12,7 +12,7 @@ class FileController extends Controller
     /** @var array */
     protected $errorMessages = [];
 
-    public function initialize()
+    public function onConstruct()
     {
         $this->validator = new Validation();
         $this->validator->add('filename', new RegexValidator([
@@ -26,7 +26,11 @@ class FileController extends Controller
     {
         $messages = $this->validator->validate(['filename'=> $filename]);
         if (count($messages) > 0) {
-            $this->errorMessages = array_merge($this->errorMessages, $messages);
+            $messageText = [];
+            foreach ($messages as $message) {
+                $messageText[] = $message->getMessage();
+            }
+            $this->errorMessages = array_merge($this->errorMessages, $messageText);
             return false;
         }
         return true;
