@@ -3,63 +3,135 @@
  * Local variables
  * @var \Phalcon\Mvc\Micro $app
  */
-use Controllers\FileController;
-use Models\Users;
+use Models\File;
+use Models\User;
 use Phalcon\Http\Response;
 
-/**
- * Add your routes here
- */
 $app->get('/', function () use($app) {
-    echo $this['view']->render('index');
+    echo 'WELCOME TO FILES API';
 });
 
-// Create new user
+/**
+ * Create user.
+ */
 $app->post('/create-user', function() use ($app) {
-    $user = new Users();
-    $response = new Response();
+    $user = new User();
     if ($user->create($_POST, array('name', 'password')) === false) {
-        $response->setStatusCode(409, "Conflict");
+        // if validation failed
         $messages = [];
         foreach ($user->getMessages() as $message) {
             $messages[] = $message->getMessage();
         }
-        $response->setJsonContent(
-            [
-                "status"   => "ERROR",
-                "messages" => $messages,
-            ]
-        );
-    } else {
-        $response->setStatusCode(201, "Created");
-        $response->setJsonContent(
-            [
-                "status" => "USER SUCCESSFULLY CREATED",
-                "data"   => ['token'=> $user->token],
-            ]
-        );
+        throw new Exception(json_encode($messages), 409);
     }
-    return $response;
+    return [
+        "status" => "USER SUCCESSFULLY CREATED",
+        "data"   => ['token'=> $user->token],
+    ];
 });
 
+#region Working with files
+/**
+ * Get file list for current user
+ */
+$app->get('/list', function() {
+    $items = scandir(User::directory());
+    $files = [];
+    foreach ($items as $item) {
+        if (is_file($item)) {
+            $files[] = $item;
+        }
+    }
+    if (count($files) > 0) {
+        return $files;
+    }
+    return ['No files in directory'];
+});
 
-$fileController = new FileController();
-// Get file list for current user
-$app->get('/list', [$fileController, 'getList']);
+/**
+ * Get file with <filename>
+ */
+$app->get('/file/{file}', function($filename) use ($app) { });
 
-// Get file with <filename>
-$app->get('/file/{file}', [$fileController, 'getFile']);
-// Create file with <filename>
-$app->post('/file/{file}', [$fileController, 'createFile']);
-// Update file with <filename>
-$app->put('/file/{file}', [$fileController, 'updateFile']);
-// Get file metadata with <filename>
-$app->get('/file/{file}/meta', [$fileController, 'getFileMeta']);
+/**
+ * Create file with <filename>
+ */
+$app->post('/file/{file}', function($filename) use ($app) {
+    if (File::exists($filename)) {
+        throw new Exception('File already exists!', 400);
+    }
+    var_dump($app->request->getRawBody());
+    var_dump($app->request->getContentType());
+});
+
+/**
+ * Update file with <filename>
+ */
+$app->put('/file/{file}', function($filename) use ($app) {
+    if (!File::exists($filename)) {
+        throw new Exception('File doesn\'t exist!', 400);
+    }
+});
+
+/**
+ * Get file metadata with <filename>
+ */
+$app->get('/file/{file}/meta', function($filename) use ($app) {
+    $file = new File($filename);
+    return $file->metaData();
+});
+#endregion
+
+#region System calls
+/**
+ * Check auth if needed.
+ */
+$app->before(function() use ($app) {
+    $request = $app->request;
+    if ($request->get('_url') == '/create-user') {
+        return true;
+    }
+    // Checking user token
+    $token = $request->getHeader('Authorization');
+    if (!preg_match('/^[A-z0-9]{40}$/', $token)) {
+        throw new Exception('Unauthorized', 401);
+    }
+    // Is user exist?
+    User::$currentUser = User::findFirst(['token = "'.$token.'"']);
+    if (User::$currentUser === false) {
+        throw new Exception('User not found', 404);
+    }
+});
+
+/**
+ * Send response with error.
+ */
+$app->error(function(Exception $exception) use ($app) {
+    $response = new Response();
+    $response->setStatusCode($exception->getCode());
+    $response->setJsonContent(
+        [
+            "status"   => "failed",
+            "messages" => $exception->getMessage(),
+        ]
+    );
+    return $response;
+});
 
 /**
  * Not found handler
  */
 $app->notFound(function () use($app) {
-    $app->response->setStatusCode(404, "Not Found")->sendHeaders();
-    echo $app['view']->render('404');
+    throw new Exception("Not Found", 404);
 });
+
+/**
+ * Send final response.
+ */
+$app->after(function () use ($app) {
+        $response = new Response();
+        $response->setStatusCode(200);
+        $response->setJsonContent($app->getReturnedValue());
+        $response->send();
+    });
+#endregion

@@ -7,8 +7,10 @@ use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness;
 use Phalcon\Validation\Validator\Regex as RegexValidator;
 
-class Users extends Model
+class User extends Model
 {
+    const USERS_FOLDER = '../users/';
+    public static $currentUser = User::class;
 
     /**
      *
@@ -62,7 +64,7 @@ class Users extends Model
      * Allows to query a set of records that match the specified conditions
      *
      * @param mixed $parameters
-     * @return Users[]|Users
+     * @return User[]|User
      */
     public static function find($parameters = null)
     {
@@ -73,7 +75,7 @@ class Users extends Model
      * Allows to query the first record that match the specified conditions
      *
      * @param mixed $parameters
-     * @return Users
+     * @return User
      */
     public static function findFirst($parameters = null)
     {
@@ -119,5 +121,18 @@ class Users extends Model
     protected function encryptPass($pass)
     {
         return sha1($pass.'octopus');
+    }
+
+    public function afterCreate()
+    {
+        mkdir($this::USERS_FOLDER. $this->name."/", 0777);
+    }
+
+    public static function directory()
+    {
+        if (static::$currentUser instanceof User && isset(static::$currentUser->name)) {
+            return static::USERS_FOLDER.static::$currentUser->name.'/';
+        }
+        throw new \Exception('User not found', 404);
     }
 }

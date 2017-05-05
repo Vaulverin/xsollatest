@@ -1,4 +1,8 @@
 <?php
+use Phalcon\Di\FactoryDefault;
+use Phalcon\Mvc\Micro;
+
+//HTTPS ONLY
 if (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] !== 'on') {
     if(!headers_sent()) {
         header("Status: 301 Moved Permanently");
@@ -10,8 +14,7 @@ if (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] !== 'on') {
         exit();
     }
 }
-use Phalcon\Di\FactoryDefault;
-use Phalcon\Mvc\Micro;
+
 
 error_reporting(E_ALL);
 
@@ -25,7 +28,6 @@ try {
      * provide a full stack framework. These default services can be overidden with custom ones.
      */
     $di = new FactoryDefault();
-
     /**
      * Include Services
      */
