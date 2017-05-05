@@ -57,20 +57,16 @@ $app->get('/file/{file}', function($filename) use ($app) { });
  * Create file with <filename>
  */
 $app->post('/file/{file}', function($filename) use ($app) {
-    if (File::exists($filename)) {
-        throw new Exception('File already exists!', 400);
-    }
-    var_dump($app->request->getRawBody());
-    var_dump($app->request->getContentType());
+    $file = new File($filename);
+    $file->createFromResponse($app->request->getContentType(), $app->request->getRawBody());
+    return ['File successfully created!'];
 });
 
 /**
  * Update file with <filename>
  */
 $app->put('/file/{file}', function($filename) use ($app) {
-    if (!File::exists($filename)) {
-        throw new Exception('File doesn\'t exist!', 400);
-    }
+
 });
 
 /**
