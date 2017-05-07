@@ -6,7 +6,7 @@ return new \Phalcon\Config([
     'database' => [
         'adapter'    => 'Mysql',
         'host'       => 'localhost',
-        'username'   => 'homestead',
+        'username'   => 'phalcon',
         'password'   => 'secret',
         'dbname'     => 'xsollatest',
         'charset'    => 'utf8',

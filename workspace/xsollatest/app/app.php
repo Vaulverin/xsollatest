@@ -8,7 +8,7 @@ use Models\User;
 use Phalcon\Http\Response;
 
 $app->get('/', function () use($app) {
-    echo 'WELCOME TO FILES API';
+    return ['WELCOME TO FILES API'];
 });
 
 /**
@@ -38,7 +38,7 @@ $app->get('/list', function() {
     $items = scandir(User::directory());
     $files = [];
     foreach ($items as $item) {
-        if (is_file($item)) {
+        if (is_file(User::directory().'/'.$item)) {
             $files[] = $item;
         }
     }
@@ -51,28 +51,38 @@ $app->get('/list', function() {
 /**
  * Get file with <filename>
  */
-$app->get('/file/{file}', function($filename) use ($app) { });
+$app->get('/file/{filename}', function($filename) use ($app) {
+    $file = new File($filename);
+    $content = $file->content();
+    $response = new Response();
+    $response->setContentType($file->mimeType());
+    $response->setContentLength(strlen($content));
+    $response->setContent($content);
+    $response->send();
+});
 
 /**
  * Create file with <filename>
  */
-$app->post('/file/{file}', function($filename) use ($app) {
+$app->post('/file/{filename}', function($filename) use ($app) {
     $file = new File($filename);
-    $file->createFromResponse($app->request->getContentType(), $app->request->getRawBody());
+    $file->createFromRequest($app->request);
     return ['File successfully created!'];
 });
 
 /**
  * Update file with <filename>
  */
-$app->put('/file/{file}', function($filename) use ($app) {
-
+$app->put('/file/{filename}', function($filename) use ($app) {
+    $file = new File($filename);
+    $file->updateFromRequest($app->request);
+    return ['File successfully updated!'];
 });
 
 /**
  * Get file metadata with <filename>
  */
-$app->get('/file/{file}/meta', function($filename) use ($app) {
+$app->get('/file/{filename}/meta', function($filename) use ($app) {
     $file = new File($filename);
     return $file->metaData();
 });
@@ -84,7 +94,7 @@ $app->get('/file/{file}/meta', function($filename) use ($app) {
  */
 $app->before(function() use ($app) {
     $request = $app->request;
-    if ($request->get('_url') == '/create-user') {
+    if (strpos($request->get('_url'), 'file') === false && $request->get('_url') != '/list') {
         return true;
     }
     // Checking user token
@@ -125,6 +135,9 @@ $app->notFound(function () use($app) {
  * Send final response.
  */
 $app->after(function () use ($app) {
+        if ($app->getReturnedValue() == null) {
+            return;
+        }
         $response = new Response();
         $response->setStatusCode(200);
         $response->setJsonContent($app->getReturnedValue());

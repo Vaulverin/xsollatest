@@ -2,6 +2,7 @@
 
 namespace Models;
 
+use Phalcon\Exception;
 use Phalcon\Mvc\Model;
 use Phalcon\Validation;
 use Phalcon\Validation\Validator\Uniqueness;
@@ -133,6 +134,6 @@ class User extends Model
         if (static::$currentUser instanceof User && isset(static::$currentUser->name)) {
             return static::USERS_FOLDER.static::$currentUser->name.'/';
         }
-        throw new \Exception('User not found', 404);
+        throw new Exception('User not found', 404);
     }
 }
