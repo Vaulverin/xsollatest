@@ -9,7 +9,7 @@ This is an test API for xsolla. API provides creating user, sending file, updati
 5. execute command `./setup.sh` from `~/workspace/xsollatest/`
 
 ## API:
-API use https protocol only.
+API uses https protocol only.
 ### */create-user*
 Creates user.
 - method: POST
