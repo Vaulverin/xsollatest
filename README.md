@@ -1,5 +1,5 @@
 # xsollatest
-This is an test API for xsolla. API provides creating user, sending file, updating file, listing files, getting meta data from file.
+This is a test API for xsolla. API provides creating user, sending file, updating file, listing files, getting meta data from file.
 
 ## Installation:
 1. download vagrant box with `vagrant box add phalconphp/xenial64`
